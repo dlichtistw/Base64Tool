@@ -41,7 +41,7 @@ public enum Base64Encoding {
 	}
 	
 	public char getChar (int index) {
-		if (index < 0 || index > 63) throw new IndexOutOfBoundsException("A Base64 encoding has base 64.");
+		if (index < 0 || index > 63) throw new IndexOutOfBoundsException(String.format("Index %d is not a single digit in base 64.", index));
 		return this.mapping[index];
 	}
 	

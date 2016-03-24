@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import de.dlichti.base64tool.crc.CRC;
 
-public class Radix64Coder extends Base64Coder {
+public class Radix64Coder extends PaddedBase64Coder {
 	protected static final CRC CRC24 = CRC.fromKoopman("C3267D");
 	
 	public Radix64Coder () {
@@ -23,11 +23,11 @@ public class Radix64Coder extends Base64Coder {
 	}
 	
 	@Override
-	public String encode (byte[] clearData) {
+	public String encode (byte[] data) {
 		byte[] checksum = new byte[3];
-		if (clearData != null && clearData.length > 0) checksum = CRC.bigIntToByteArray(CRC24.checksum(new BigInteger(clearData)));
+		if (data != null && data.length > 0) checksum = CRC.bigIntToByteArray(CRC24.checksum(new BigInteger(data)));
 		
-		return String.format("%s\n=%s", super.encode(clearData), super.encode(checksum));
+		return String.format("%s\n=%s", super.encode(data), super.encode(checksum));
 	}
 	
 	protected final static Pattern CHECKSUM_PATTERN = Pattern.compile("(.*)^=(.+)$", Pattern.MULTILINE | Pattern.DOTALL);
