@@ -14,4 +14,21 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>res/Icon20.png</name>
+			<type>1</type>
+			<location>C:/Users/david/Programmieren/Java/Base64Tool/res/Icon20.png</location>
+		</link>
+		<link>
+			<name>res/Icon40.png</name>
+			<type>1</type>
+			<location>C:/Users/david/Programmieren/Java/Base64Tool/res/Icon40.png</location>
+		</link>
+		<link>
+			<name>res/Icon60.png</name>
+			<type>1</type>
+			<location>C:/Users/david/Programmieren/Java/Base64Tool/res/Icon60.png</location>
+		</link>
+	</linkedResources>
 </projectDescription>
