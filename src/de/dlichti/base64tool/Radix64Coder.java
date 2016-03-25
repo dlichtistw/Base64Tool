@@ -24,7 +24,7 @@ public class Radix64Coder extends PaddedBase64Coder {
 	@Override
 	public String encode (byte[] data) {
 		byte[] checksum = new byte[3];
-		if (data != null && data.length > 0) checksum = longToByteArray(CRC24.checksum(data), 3);
+		if (data != null && data.length > 0) checksum = longToByteArray(CRC24.checksum(data));
 		
 		return String.format("%s\n=%s", super.encode(data), super.encode(checksum));
 	}
@@ -49,10 +49,7 @@ public class Radix64Coder extends PaddedBase64Coder {
 		}
 	}
 	
-	public static byte[] checksumToByteArray (long checksum) {
-		return longToByteArray(checksum, 3);
-	}
-	public static byte[] longToByteArray (long ln, int length) {
+	protected static byte[] longToByteArray (long ln) {
 		final byte[] bcs = new byte[(64 - Long.numberOfLeadingZeros(ln) + 7) / 8];
 		for (int i = bcs.length - 1; i >= 0; i--) {
 			bcs[i] = (byte) (ln & 0b11111111);
@@ -60,7 +57,7 @@ public class Radix64Coder extends PaddedBase64Coder {
 		}
 		return bcs;
 	}
-	public static long byteArrayToLong (byte[] byteArray) {
+	protected static long byteArrayToLong (byte[] byteArray) {
 		long ln = 0;
 		for (int i = 0; i < byteArray.length; i++) {
 			ln = ln << 8;
