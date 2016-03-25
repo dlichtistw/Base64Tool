@@ -9,7 +9,7 @@
 
 package de.dlichti.base64tool;
 
-public class Base64Exception extends Exception {
+public class Base64Exception extends BaseCoderException {
 	private static final long serialVersionUID = 1L;
 	
 	public final Base64Encoding encoding;

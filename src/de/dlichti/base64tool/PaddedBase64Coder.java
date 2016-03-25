@@ -1,3 +1,12 @@
+/*
+ * This file is part of the Base64Tool project.
+ * 
+ * Copyright (c) 2016, David Lichti
+ * All rights reserved.
+ * 
+ * The Base64Tool is published under the BSD-2-Clause license.
+ */
+
 package de.dlichti.base64tool;
 
 import java.util.regex.Pattern;
@@ -47,6 +56,6 @@ public class PaddedBase64Coder extends Base64Coder {
 	 * @return				A {@code char[]} suitable for Base64 conversion of the specified amount of data
 	 */
 	protected static char[] getCharArrayFor (int dataLength) {
-		return new char[4 * ((dataLength) + 2) / 3];
+		return new char[4 * (((dataLength) + 2) / 3)];
 	}
 }
