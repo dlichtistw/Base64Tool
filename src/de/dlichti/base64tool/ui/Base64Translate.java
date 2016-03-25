@@ -19,6 +19,7 @@ import de.dlichti.base64tool.Base64CoderMIME;
 import de.dlichti.base64tool.Base64Encoding;
 import de.dlichti.base64tool.Base64Exception;
 import de.dlichti.base64tool.Radix64Coder;
+import de.dlichti.base64tool.StandardBase64Coder;
 
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
@@ -26,11 +27,15 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Base64Translate {
 	// Some important UI components
@@ -43,6 +48,7 @@ public class Base64Translate {
 	
 	// Actions to change encoding
 	private final SelectCoderAction selectBase64Action = new SelectCoderAction(new Base64Coder());
+	private final SelectCoderAction selectBase64StandardAction = new SelectCoderAction(new StandardBase64Coder());
 	private final SelectCoderAction selectBase64UrlAction = new SelectCoderAction(new Base64Coder(Base64Encoding.BASE_64_URL));
 	private final SelectCoderAction selectBase64XmlAction = new SelectCoderAction(new Base64Coder(Base64Encoding.BASE_64_XML_NAME));
 	private final SelectCoderAction selectBase64MIMEAction = new SelectCoderAction(new Base64CoderMIME());
@@ -96,17 +102,26 @@ public class Base64Translate {
 		mainFrame.setBounds(100, 100, 507, 376);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+		List<Image> imageList = new LinkedList<Image> ();
+		imageList.add(new ImageIcon("res/Icon20.png").getImage());
+		imageList.add(new ImageIcon("res/Icon40.png").getImage());
+		imageList.add(new ImageIcon("res/Icon60.png").getImage());
+		imageList.add(new ImageIcon("res/Icon80.png").getImage());
+		imageList.add(new ImageIcon("res/Icon100.png").getImage());
+		mainFrame.setIconImages(imageList);
+		
 		JPanel optionsPanel = new JPanel();
 		mainFrame.getContentPane().add(optionsPanel, BorderLayout.NORTH);
 		GridBagLayout gbl_optionsPanel = new GridBagLayout();
-		gbl_optionsPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
+		gbl_optionsPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0};
 		gbl_optionsPanel.rowHeights = new int[]{0, 0};
-		gbl_optionsPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_optionsPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		gbl_optionsPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
 		optionsPanel.setLayout(gbl_optionsPanel);
 		
 		int gridx = 0;
 		defaultButton = addEncodingButton(selectBase64Action, optionsPanel, gridx++, 0);
+		addEncodingButton(selectBase64StandardAction, optionsPanel, gridx++, 0);
 		addEncodingButton(selectBase64MIMEAction, optionsPanel, gridx++, 0);
 		addEncodingButton(selectRadix64Action, optionsPanel, gridx++, 0);
 		addEncodingButton(selectBase64UrlAction, optionsPanel, gridx++, 0);
