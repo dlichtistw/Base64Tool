@@ -15,9 +15,11 @@ import javax.swing.JFrame;
 import javax.swing.JRadioButton;
 
 import de.dlichti.base64tool.Base64Coder;
+import de.dlichti.base64tool.Base64CoderMIME;
 import de.dlichti.base64tool.Base64Encoding;
 import de.dlichti.base64tool.Base64Exception;
 import de.dlichti.base64tool.Radix64Coder;
+import de.dlichti.base64tool.StandardBase64Coder;
 
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
@@ -25,11 +27,15 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Base64Translate {
 	// Some important UI components
@@ -38,13 +44,14 @@ public class Base64Translate {
 	private final InputArea txtrClearText = new InputArea("Clear Text");
 	private final InputArea txtrEncodedText = new InputArea("Encoded Text");
 	
-	private JRadioButton rdbtnBase64;
-	private JRadioButton rdbtnBase64url;
-	private JRadioButton rdbtnRadix64;
+	private JRadioButton defaultButton;
 	
 	// Actions to change encoding
 	private final SelectCoderAction selectBase64Action = new SelectCoderAction(new Base64Coder());
+	private final SelectCoderAction selectBase64StandardAction = new SelectCoderAction(new StandardBase64Coder());
 	private final SelectCoderAction selectBase64UrlAction = new SelectCoderAction(new Base64Coder(Base64Encoding.BASE_64_URL));
+	private final SelectCoderAction selectBase64XmlAction = new SelectCoderAction(new Base64Coder(Base64Encoding.BASE_64_XML_NAME));
+	private final SelectCoderAction selectBase64MIMEAction = new SelectCoderAction(new Base64CoderMIME());
 	private final SelectCoderAction selectRadix64Action = new SelectCoderAction(new Radix64Coder());
 	
 	/**
@@ -82,7 +89,7 @@ public class Base64Translate {
 		initialize();
 		
 		this.encode = true;
-		this.encodingButtonGroup.setSelected(this.rdbtnBase64.getModel(), true);
+		this.encodingButtonGroup.setSelected(this.defaultButton.getModel(), true);
 		this.selectBase64Action.actionPerformed(null);
 	}
 
@@ -95,45 +102,36 @@ public class Base64Translate {
 		mainFrame.setBounds(100, 100, 507, 376);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
+		List<Image> imageList = new LinkedList<Image> ();
+		imageList.add(new ImageIcon("res/Icon20.png").getImage());
+		imageList.add(new ImageIcon("res/Icon40.png").getImage());
+		imageList.add(new ImageIcon("res/Icon60.png").getImage());
+		imageList.add(new ImageIcon("res/Icon80.png").getImage());
+		imageList.add(new ImageIcon("res/Icon100.png").getImage());
+		mainFrame.setIconImages(imageList);
+		
 		JPanel optionsPanel = new JPanel();
 		mainFrame.getContentPane().add(optionsPanel, BorderLayout.NORTH);
 		GridBagLayout gbl_optionsPanel = new GridBagLayout();
-		gbl_optionsPanel.columnWidths = new int[]{0, 0, 0, 0};
+		gbl_optionsPanel.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0};
 		gbl_optionsPanel.rowHeights = new int[]{0, 0};
-		gbl_optionsPanel.columnWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_optionsPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		gbl_optionsPanel.rowWeights = new double[]{0.0, Double.MIN_VALUE};
 		optionsPanel.setLayout(gbl_optionsPanel);
 		
-		this.rdbtnBase64 = new JRadioButton("Base64");
-		this.rdbtnBase64.setAction(selectBase64Action);
-		encodingButtonGroup.add(this.rdbtnBase64);
-		GridBagConstraints gbc_rdbtnBase64 = new GridBagConstraints();
-		gbc_rdbtnBase64.insets = new Insets(0, 0, 0, 5);
-		gbc_rdbtnBase64.gridx = 0;
-		gbc_rdbtnBase64.gridy = 0;
-		optionsPanel.add(this.rdbtnBase64, gbc_rdbtnBase64);
-		
-		this.rdbtnBase64url = new JRadioButton("Base64url");
-		this.rdbtnBase64url.setAction(selectBase64UrlAction);
-		encodingButtonGroup.add(this.rdbtnBase64url);
-		GridBagConstraints gbc_rdbtnBase64url = new GridBagConstraints();
-		gbc_rdbtnBase64url.insets = new Insets(0, 0, 0, 5);
-		gbc_rdbtnBase64url.gridx = 1;
-		gbc_rdbtnBase64url.gridy = 0;
-		optionsPanel.add(this.rdbtnBase64url, gbc_rdbtnBase64url);
-		
-		this.rdbtnRadix64 = new JRadioButton("Radix64");
-		this.rdbtnRadix64.setAction(selectRadix64Action);
-		encodingButtonGroup.add(this.rdbtnRadix64);
-		GridBagConstraints gbc_rdbtnRadix64 = new GridBagConstraints();
-		gbc_rdbtnRadix64.gridx = 2;
-		gbc_rdbtnRadix64.gridy = 0;
-		optionsPanel.add(this.rdbtnRadix64, gbc_rdbtnRadix64);
+		int gridx = 0;
+		defaultButton = addEncodingButton(selectBase64Action, optionsPanel, gridx++, 0);
+		addEncodingButton(selectBase64StandardAction, optionsPanel, gridx++, 0);
+		addEncodingButton(selectBase64MIMEAction, optionsPanel, gridx++, 0);
+		addEncodingButton(selectRadix64Action, optionsPanel, gridx++, 0);
+		addEncodingButton(selectBase64UrlAction, optionsPanel, gridx++, 0);
+		addEncodingButton(selectBase64XmlAction, optionsPanel, gridx++, 0);
 		
 		JPanel contentPanel = new JPanel();
 		mainFrame.getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(new GridLayout(0, 2, 0, 0));
 		
+		this.txtrClearText.setWrapStyleWord(true);
 		contentPanel.add(this.txtrClearText);
 		this.txtrClearText.addKeyListener(new KeyAdapter() {
 			@Override
@@ -153,6 +151,18 @@ public class Base64Translate {
 		});
 	}
 	
+	protected JRadioButton addEncodingButton (SelectCoderAction action, JPanel panel, int gridx, int gridy) {
+		JRadioButton button = new JRadioButton();
+		button.setAction(action);
+		encodingButtonGroup.add(button);
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.insets = new Insets(0, 0, 0, 5);
+		constraints.gridx = gridx;
+		constraints.gridy = gridy;
+		panel.add(button, constraints);
+		return button;
+	}
+
 	protected void updateText () {
 		System.out.println("Updating text field contents");
 		

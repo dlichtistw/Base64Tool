@@ -11,7 +11,7 @@ package de.dlichti.base64tool;
 
 import java.util.regex.Pattern;
 
-public class Base64Coder {
+public class Base64Coder extends BaseCoder<String> {
 	protected static final Pattern TRIM_PATTERN = Pattern.compile("\\s+");
 	public final Base64Encoding encoding;
 	
@@ -23,10 +23,7 @@ public class Base64Coder {
 	}
 
 	/**
-	 * Encode the specified {@code String} using the encoding of the encoder instance.
-	 * 
-	 * @param data		the {@code byte[]} to encode
-	 * @return			the encoded text
+	 * {@inheritDoc}
 	 */
 	public String encode (byte[] data) {
 		final char[] b64String = getCharArrayFor(data.length);
@@ -95,11 +92,7 @@ public class Base64Coder {
 	}
 	
 	/**
-	 * Attempt to decode the specified {@code String} assuming it is encoded using the encoding of the encoder instance.
-	 * 
-	 * @param encodedData	the {@code String} to decode
-	 * @return				the decoded data
-	 * @throws Base64Exception 
+	 * {@inheritDoc}
 	 */
 	public byte[] decode (String encodedData) throws Base64Exception {
 		final char[] trimmedB64 = TRIM_PATTERN.matcher(encodedData).replaceAll("").toCharArray();
