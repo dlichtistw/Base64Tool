@@ -9,45 +9,61 @@
 
 package de.dlichti.base64tool;
 
-import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.dlichti.base64tool.crc.CRC;
 
-public class Radix64Coder extends Base64Coder {
-	protected static final CRC CRC24 = CRC.fromKoopman("C3267D");
+public class Radix64Coder extends PaddedBase64Coder {
+	protected static final CRC CRC24 = new CRC(0xC3267D);
 	
 	public Radix64Coder () {
 		super (Base64Encoding.BASE_64);
 	}
 	
 	@Override
-	public String encode (byte[] clearData) {
+	public String encode (byte[] data) {
 		byte[] checksum = new byte[3];
-		if (clearData != null && clearData.length > 0) checksum = CRC.bigIntToByteArray(CRC24.checksum(new BigInteger(clearData)));
+		if (data != null && data.length > 0) checksum = longToByteArray(CRC24.checksum(data));
 		
-		return String.format("%s\n=%s", super.encode(clearData), super.encode(checksum));
+		return String.format("%s\n=%s", super.encode(data), super.encode(checksum));
 	}
 	
 	protected final static Pattern CHECKSUM_PATTERN = Pattern.compile("(.*)^=(.+)$", Pattern.MULTILINE | Pattern.DOTALL);
 	@Override
 	public byte[] decode (String encodedData) throws Base64Exception {
 		final Matcher checksumFinder = CHECKSUM_PATTERN.matcher(encodedData);
-		BigInteger checksum = null;
+		long checksum = 0;
 		if (checksumFinder.find()) {
-			checksum = CRC.byteArrayToBigInt(super.decode(checksumFinder.group(2)));
+			checksum = byteArrayToLong(super.decode(checksumFinder.group(2)));
 		} else {
 			throw new Radix64Exception("Checksum is missing.");
 		}
 		
 		final byte[] decoded = super.decode(checksumFinder.group(1));
 		
-		if (CRC24.validate(new BigInteger(decoded), checksum)) {
+		if (checksum == CRC24.checksum(decoded)) {
 			return decoded;
 		} else {
 			throw new Radix64Exception("Checksum error");
 		}
+	}
+	
+	protected static byte[] longToByteArray (long ln) {
+		final byte[] bcs = new byte[(64 - Long.numberOfLeadingZeros(ln) + 7) / 8];
+		for (int i = bcs.length - 1; i >= 0; i--) {
+			bcs[i] = (byte) (ln & 0b11111111);
+			ln = ln >>> 8;
+		}
+		return bcs;
+	}
+	protected static long byteArrayToLong (byte[] byteArray) {
+		long ln = 0;
+		for (int i = 0; i < byteArray.length; i++) {
+			ln = ln << 8;
+			ln |= Byte.toUnsignedInt(byteArray[i]);
+		}
+		return ln;
 	}
 	
 	@Override

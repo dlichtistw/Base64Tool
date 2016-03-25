@@ -9,13 +9,10 @@
 
 package de.dlichti.base64tool;
 
-import java.math.BigInteger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.dlichti.base64tool.crc.CRC;
-
-public class Base64Coder {	
+public class Base64Coder {
+	protected static final Pattern TRIM_PATTERN = Pattern.compile("\\s+");
 	public final Base64Encoding encoding;
 	
 	public Base64Coder () {
@@ -28,13 +25,75 @@ public class Base64Coder {
 	/**
 	 * Encode the specified {@code String} using the encoding of the encoder instance.
 	 * 
-	 * @param clearText		the {@code String} to encode
-	 * @return				the encoded text
+	 * @param data		the {@code byte[]} to encode
+	 * @return			the encoded text
 	 */
-	public String encode (byte[] clearData) {
-		return Base64Coder.encode(clearData, this.encoding);
+	public String encode (byte[] data) {
+		final char[] b64String = getCharArrayFor(data.length);
+		encode(data, b64String, this.encoding);
+		return String.copyValueOf(b64String);
 	}
+	
+	/**
+	 * Takes binary data and encodes it into a given {@code char} array according to the specified {@code Base64Encoding}.
+	 * It is assumed that the {@code char} array is large enough to hold all the encoded data.
+	 * The method returns the capacity which has been used to store the encoded data.
+	 * The data itself can be found in the {@code char[]} given as parameter.
+	 * 
+	 * @param data			a {@code byte[]} holding the binary data
+	 * @param b64Data		the {@code char[]} to use for the encoded data
+	 * @param encoding		an instance of {@code Base64Encoding} used to translate from binary to Base64
+	 * @return				the number of character that have been stored in the character array
+	 */
+	protected static int encode (byte[] data, char[] b64Data, Base64Encoding encoding) {
+		final int datLen = data.length;
+		
+		int datInd = 0; // Index in the byte array representing the plain data
+		int b64Ind = 0; // Index in the character array representing the Base64 encoded data
+		int bitBuf = 0; // Bit buffer to operate on. Data is loaded from the right and consumed from the left.
+		int bufLen = 0; // How many bits are currently loaded into the buffer
+		
+		boolean done = false;
+		while (!done) {
+			while (bufLen <= 24) { // load data
+				if (datInd == datLen) {
+					done = true;
+					break;
+				}
+//				System.out.println(String.format("Buffer: %32s <- %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString(Byte.toUnsignedInt(data[datInd]))));
+				
+				bitBuf |= Byte.toUnsignedInt(data[datInd++]) << (24 - bufLen);
+				bufLen += 8;
+			}
+			
+//			System.out.println(String.format("Buffer: %32s", Integer.toBinaryString(bitBuf)));
 
+			while (bufLen >= 6) { // store data
+//				System.out.println(String.format("Buffer: %32s -> %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString((bitBuf >>> 26) & 63)));
+
+				// extract the left most bits
+				assert b64Ind < b64Data.length;
+				b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 0b111111);
+				
+				// remove stored bits
+				bitBuf = bitBuf << 6;
+				bufLen -= 6;
+			}
+		}
+		
+		if (bufLen > 0) { // empty buffer
+//			System.out.println(String.format("Buffer: %32s -> %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString((bitBuf >>> 26) & 63)));
+			
+			assert b64Ind < b64Data.length;
+			b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 0b111111);
+			
+			bitBuf = bitBuf << 6;
+			bufLen = 0;
+		}
+		
+		return b64Ind;
+	}
+	
 	/**
 	 * Attempt to decode the specified {@code String} assuming it is encoded using the encoding of the encoder instance.
 	 * 
@@ -43,90 +102,62 @@ public class Base64Coder {
 	 * @throws Base64Exception 
 	 */
 	public byte[] decode (String encodedData) throws Base64Exception {
-		return Base64Coder.decode(encodedData, this.encoding);
+		final char[] trimmedB64 = TRIM_PATTERN.matcher(encodedData).replaceAll("").toCharArray();
+		final byte[] data = getByteArrayFor(trimmedB64.length);
+		Base64Coder.decode(trimmedB64, data, this.encoding);
+		return data;
 	}
-	
-	protected static final BigInteger SIX_BIT_MASK = new BigInteger("111111", 2);
-	protected static String encode (byte[] clearData, Base64Encoding encoding) {
-		final char[] b64String = new char[4 * ((clearData.length + 2) / 3)];
+	protected static int decode (char[] b64Data, byte[] data, Base64Encoding encoding) throws Base64Exception {
+		final int b64Len = b64Data.length;
 		
-		BigInteger bi;
-		final byte[] sbString = new byte[3];
-		int padding = 0;
-		int bIndex = 0;
-		int b64Index = 0;
-		while (bIndex < clearData.length) {
-			do {
-				if (bIndex < clearData.length) {
-					sbString[bIndex % 3] = clearData[bIndex++];
-				} else {
-					sbString[bIndex % 3] = 0;
-					padding++;
-					bIndex++;
+		int datInd = 0; // Index in the byte array representing the plain data
+		int b64Ind = 0; // Index in the character array representing the Base64 encoded data
+		int bitBuf = 0; // Bit buffer to operate on. Data is loaded from the right and consumed from the left.
+		int bufLen = 0; // How many bits are currently loaded into the buffer
+		
+		boolean done = false;
+		while (!done) {
+			while (bufLen <= 26) { // load data
+				if (b64Ind == b64Len) {
+					done = true;
+					break;
 				}
-			} while (bIndex % 3 != 0);
-			
-			bi = new BigInteger(sbString);
-			
-			for (int i = 3; i >= 0; i--) {
-				b64String[b64Index + i] = encoding.getChar(bi.and(SIX_BIT_MASK).intValue());
-				bi = bi.shiftRight(6);
+//				System.out.println(String.format("Buffer: %32s <- %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString(encoding.getValue(b64Data[b64Ind]))));
+				
+				bitBuf |= encoding.getValue(b64Data[b64Ind++]) << (26 - bufLen);
+				bufLen += 6;
 			}
-			b64Index += 4;
+			
+//			System.out.println(String.format("Buffer: %32s", Integer.toBinaryString(bitBuf)));
+
+			while (bufLen >= 8) { // store data
+//				System.out.println(String.format("Buffer: %32s -> %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString((bitBuf >>> 24) & 255)));
+
+				// extract the left most bits
+				assert datInd < data.length;
+				data[datInd++] = (byte) ((bitBuf >>> 24) & 0b11111111);
+				
+				// remove stored bits
+				bitBuf = bitBuf << 8;
+				bufLen -= 8;
+			}
 		}
 		
-		for (int i = 1; i <= padding; i++) {
-			b64String[b64String.length - i] = '=';
-		}
-		
-		return String.copyValueOf(b64String);
+		return datInd;
 	}
 	
-	protected static final Pattern TRIM_PATTERN = Pattern.compile("\\s+");
-	protected static final BigInteger EIGHT_BIT_MASK = new BigInteger("11111111", 2);
-	protected static byte[] decode (String encodedData, Base64Encoding encoding) throws Base64Exception {
-		final Matcher trimmer = TRIM_PATTERN.matcher(encodedData);
-		final String trimmedData = trimmer.replaceAll("");
-		
-		final char[] b64String = trimmedData.toCharArray();
-		byte[] bString = new byte[3 * (b64String.length / 4)];
-		
-		int b64Index = 0;
-		int bIndex = 0;
-		BigInteger buffer = BigInteger.ZERO;
-		byte[] byteBuffer;
-		char character;
-		int padding = 0;
-		while (b64Index < b64String.length) {
-			if (padding > 0) throw new Base64Exception("Unexpected data found after regular end of Base64 string.", encoding);
-			
-			try {
-				do {
-					character = b64String[b64Index++];
-					buffer = buffer.shiftLeft(6);
-					if (character == '=') {
-						padding++;
-					} else {
-						buffer = buffer.or(BigInteger.valueOf(encoding.getValue(character)));
-					}
-				} while (b64Index % 4 != 0);
-			} catch (IndexOutOfBoundsException indexEx) {
-				throw new Base64Exception(String.format("The encoded data ended unexpectedly after %d characters.", b64Index - 1));
-			}
-			
-			byteBuffer = CRC.bigIntToByteArray(buffer);
-			for (int i = 0; i < byteBuffer.length; i++) {
-				bString[bIndex + i] = byteBuffer[i];
-			}
-			bIndex += byteBuffer.length;
-			
-			buffer = BigInteger.ZERO;
-		}
-		
-		final byte[] tString = new byte[bString.length - padding];
-		for (int i = 0; i < tString.length; i++) tString[i] = bString[i];
-		
-		return tString;
+	/**
+	 * Creates and returns a {@code char[]} which is large enough to hold a Base64 encoding of data with the specified number of bytes.
+	 * It is the minimal number of units of size 6 (a Base64 digit) needed to store at least the content of {@code dataLen} units of size 8 (a {@code byte}).
+	 * 
+	 * @param dataLength	The length of the original data in bytes
+	 * @return				A {@code char[]} suitable for Base64 conversion of the specified amount of data
+	 */
+	protected static char[] getCharArrayFor (int dataLength) {
+		return new char[((8 * dataLength) + 5) / 6];
+	}
+	protected static byte[] getByteArrayFor (int b64Length) {
+		return new byte[(6 * b64Length) / 8];
 	}
 	
 	public String getName () {
