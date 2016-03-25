@@ -73,7 +73,7 @@ public class Base64Coder {
 
 				// extract the left most bits
 				assert b64Ind < b64Data.length;
-				b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 63);
+				b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 0b111111);
 				
 				// remove stored bits
 				bitBuf = bitBuf << 6;
@@ -85,7 +85,7 @@ public class Base64Coder {
 //			System.out.println(String.format("Buffer: %32s -> %8s", Integer.toBinaryString(bitBuf), Integer.toBinaryString((bitBuf >>> 26) & 63)));
 			
 			assert b64Ind < b64Data.length;
-			b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 63);
+			b64Data[b64Ind++] = encoding.getChar((bitBuf >>> 26) & 0b111111);
 			
 			bitBuf = bitBuf << 6;
 			bufLen = 0;
@@ -135,7 +135,7 @@ public class Base64Coder {
 
 				// extract the left most bits
 				assert datInd < data.length;
-				data[datInd++] = (byte) ((bitBuf >>> 24) & 255);
+				data[datInd++] = (byte) ((bitBuf >>> 24) & 0b11111111);
 				
 				// remove stored bits
 				bitBuf = bitBuf << 8;
